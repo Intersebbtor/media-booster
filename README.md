@@ -1,4 +1,4 @@
-# Media Booster (prototype)
+# Media Booster for OnePlus
 
 Keeps your recently used media players in the OnePlus / ColorOS quick settings media panel, even after the apps were closed or killed in the background.
 
