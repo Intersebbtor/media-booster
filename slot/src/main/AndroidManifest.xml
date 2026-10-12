@@ -5,13 +5,13 @@
 
     <!-- Delegation is silently dropped if the host package is not visible -->
     <queries>
-        <package android:name="io.github.intersebbtor.playerpin" />
+        <package android:name="io.github.intersebbtor.mediabooster" />
     </queries>
 
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/slot_name">
-        <!-- No launcher entry. Started once by Player Pin to grant delegation. -->
+        <!-- No launcher entry. Started once by Media Booster to grant delegation. -->
         <activity
             android:name=".ActivateActivity"
             android:exported="true"

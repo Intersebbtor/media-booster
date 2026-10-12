@@ -1,4 +1,4 @@
-package io.github.intersebbtor.playerpin.slot
+package io.github.intersebbtor.mediabooster.slot
 
 import android.app.Activity
 import android.app.NotificationChannel
@@ -6,10 +6,10 @@ import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Bundle
 
-/** Grant Player Pin the right to post this slot's player card, then vanish. */
+/** Grant Media Booster the right to post this slot's player card, then vanish. */
 class ActivateActivity : Activity() {
 
-    private val host = "io.github.intersebbtor.playerpin"
+    private val host = "io.github.intersebbtor.mediabooster"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

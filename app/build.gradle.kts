@@ -11,7 +11,7 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "io.github.intersebbtor.playerpin"
+    namespace = "io.github.intersebbtor.mediabooster"
 
     signingConfigs {
         if (keystoreProps.isNotEmpty()) {
@@ -26,7 +26,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "io.github.intersebbtor.playerpin"
+        applicationId = "io.github.intersebbtor.mediabooster"
         minSdk = 31
         targetSdk = 36
         versionCode = 4
@@ -53,5 +53,5 @@ kotlin {
 }
 
 base {
-    archivesName.set("PlayerPin-${android.defaultConfig.versionName}")
+    archivesName.set("MediaBooster-${android.defaultConfig.versionName}")
 }

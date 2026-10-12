@@ -5,10 +5,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
-        <package android:name="io.github.intersebbtor.playerpin.slot1" />
-        <package android:name="io.github.intersebbtor.playerpin.slot2" />
-        <package android:name="io.github.intersebbtor.playerpin.slot3" />
-        <package android:name="io.github.intersebbtor.playerpin.slot4" />
+        <package android:name="io.github.intersebbtor.mediabooster.slot1" />
+        <package android:name="io.github.intersebbtor.mediabooster.slot2" />
+        <package android:name="io.github.intersebbtor.mediabooster.slot3" />
         <intent>
             <action android:name="android.media.browse.MediaBrowserService" />
         </intent>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Player Pin</string>
+    <string name="app_name">Media Booster</string>
     <string name="widget_name">Widget Stack</string>
     <string name="widget_description">Up to 4 media players stacked in one widget: Spotify, Audible, Pocket Casts &amp; co.</string>
     <string name="cd_prev">Back</string>
@@ -18,19 +18,19 @@
     <string name="not_running">Not running · ▶ to start</string>
     <string name="cd_pause_fmt">Pause %s</string>
     <string name="cd_play_fmt">Play %s</string>
-    <string name="subtitle_edit">Keeps your last players in quick settings, even after the apps were closed.</string>
+    <string name="subtitle_edit">Your last players stay in quick settings, even after the apps were closed.</string>
     <string name="subtitle_home">Your media players, stacked in one widget.</string>
     <string name="all_set">✓ All set</string>
     <string name="sec_setup">Setup</string>
     <string name="notif_title">Notification access</string>
-    <string name="notif_ok">Active. The widget can see what is playing.</string>
-    <string name="notif_missing">Required so the widget can read titles and playback state.</string>
+    <string name="notif_ok">Active. Media Booster can see what is playing.</string>
+    <string name="notif_missing">Required so Media Booster can see your players and keep them.</string>
     <string name="grant">Grant</string>
     <string name="restricted_hint">Switch greyed out? Android blocks this for sideloaded apps. Open App info, tap ⋮ (top right) → \"Allow restricted settings\", then grant access again.</string>
     <string name="open_app_info">Open App info</string>
     <string name="battery_title">Battery: unrestricted</string>
-    <string name="battery_ok">Active. The widget stays up to date.</string>
-    <string name="battery_missing">Recommended, especially on OnePlus, Oppo, Xiaomi and Samsung. Otherwise the widget may freeze after a while.</string>
+    <string name="battery_ok">Active. Media Booster keeps running.</string>
+    <string name="battery_missing">Recommended, especially on OnePlus, Oppo, Xiaomi and Samsung. Otherwise players may disappear after a while.</string>
     <string name="allow">Allow</string>
     <string name="sec_rows">Rows</string>
     <string name="rows_question">How many players should stay pinned?</string>
@@ -55,20 +55,24 @@
     <string name="all_apps">All apps</string>
     <string name="player_for_row">Player for row %d</string>
     <string name="cancel">Cancel</string>
-    <string name="channel_name">Pinned players</string>
+    <string name="channel_name">Boosted players</string>
     <string name="saved">Saved</string>
     <string name="post_title">Notifications</string>
-    <string name="post_ok">Active. Pinned players can be shown.</string>
-    <string name="post_missing">Required to show pinned players in quick settings.</string>
+    <string name="post_ok">Active. Boosted players can be shown.</string>
+    <string name="post_missing">Required to show boosted players in quick settings.</string>
     <string name="sec_now">Recent players</string>
-    <string name="st_live">Open in its app</string>
-    <string name="st_pinned">Kept in quick settings</string>
-    <string name="st_waiting">Remembered, waiting for a free place</string>
+    <string name="st_live">Playing in its app</string>
+    <string name="st_pinned">Kept by Media Booster</string>
+    <string name="st_waiting">Waiting for a free place</string>
     <string name="hist_empty">Nothing yet. Play something in one of the apps below.</string>
-    <string name="hist_hint">The media panel shows 3 players. Players that are open come first, free places are filled from this list, most recent first.</string>
+    <string name="hist_hint">Open players get a place first. Free places are filled with your most recently used apps from the background.</string>
     <string name="sec_remember">Apps to remember</string>
     <string name="remember_hint">Only these apps stay in quick settings after they close. Other apps, like a browser, only show while they are open.</string>
     <string name="forget_cd">Forget</string>
     <string name="search_hint">Search apps</string>
     <string name="search_empty">No app found.</string>
+    <string name="sec_qs">Quick settings · 3 places</string>
+    <string name="sec_bg">Background</string>
+    <string name="bg_empty">Nothing waiting. Players you allow below land here when no place is free.</string>
+    <string name="place_free">Free</string>
 </resources>

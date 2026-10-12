@@ -1,4 +1,4 @@
-package io.github.intersebbtor.playerpin
+package io.github.intersebbtor.mediabooster
 
 import android.content.Context
 import android.content.Intent

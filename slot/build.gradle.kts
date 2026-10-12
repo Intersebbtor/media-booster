@@ -3,10 +3,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// Empty identity shells. Each slot only grants Player Pin the right to post
+// Empty identity shells. Each slot only grants Media Booster the right to post
 // notifications in its name, so the system shows separate player cards.
 android {
-    namespace = "io.github.intersebbtor.playerpin.slot"
+    namespace = "io.github.intersebbtor.mediabooster.slot"
     compileSdk = 36
 
     defaultConfig {
@@ -18,11 +18,11 @@ android {
 
     flavorDimensions += "slot"
     productFlavors {
-        for (n in 1..4) {
+        for (n in 1..3) {
             create("slot$n") {
                 dimension = "slot"
-                applicationId = "io.github.intersebbtor.playerpin.slot$n"
-                resValue("string", "slot_name", "Player Pin $n")
+                applicationId = "io.github.intersebbtor.mediabooster.slot$n"
+                resValue("string", "slot_name", "Media Booster $n")
             }
         }
     }

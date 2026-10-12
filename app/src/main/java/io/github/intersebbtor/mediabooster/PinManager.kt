@@ -1,4 +1,4 @@
-package io.github.intersebbtor.playerpin
+package io.github.intersebbtor.mediabooster
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -38,7 +38,7 @@ object PinManager {
         var target: String? = null
     }
 
-    fun slotPackage(index: Int) = "io.github.intersebbtor.playerpin.slot${index + 1}"
+    fun slotPackage(index: Int) = "io.github.intersebbtor.mediabooster.slot${index + 1}"
 
     /** Slot shells that are installed but have not granted delegation yet. */
     fun slotsNeedingActivation(c: Context, count: Int): List<String> {
@@ -86,6 +86,16 @@ object PinManager {
     private var keepAlive: Runnable? = null
 
     enum class Status { LIVE, PINNED, WAITING }
+
+    data class Place(val pkg: String, val status: Status)
+
+    /** For the UI: the panel places in order, and what waits in the background. */
+    @Volatile
+    var places: List<Place> = emptyList()
+        private set
+    @Volatile
+    var background: List<String> = emptyList()
+        private set
 
     /** For the UI: what each app currently is in the panel. */
     @Volatile
@@ -143,6 +153,10 @@ object PinManager {
             show(c, visible[index], index, sessions[visible[index]])
         }
 
+        val realOrdered = realShown.sortedByDescending { realPosted[it] ?: 0L }
+        places = (realOrdered.map { Place(it, Status.LIVE) } + visible.map { Place(it, Status.PINNED) }).take(Prefs.VISIBLE)
+        val placed = places.map { it.pkg }.toSet()
+        background = Prefs.history(c).map { it.pkg }.filter { it in remembered && it !in placed }
         status = buildMap {
             Prefs.history(c).forEach { put(it.pkg, Status.WAITING) }
             visible.forEach { put(it, Status.PINNED) }
@@ -268,7 +282,7 @@ object PinManager {
         val newId = if (p.visible && due) (if (oldId % 2 == 0) oldId + 1 else oldId - 1) else oldId
 
         val b = Notification.Builder(c, CHANNEL)
-            .setSmallIcon(Icon.createWithResource(c, R.drawable.ic_music))
+            .setSmallIcon(Icon.createWithResource(c, R.drawable.ic_booster))
             .setContentTitle(shownTitle)
             .setContentText(shownSub)
             .setLargeIcon(art)
@@ -351,7 +365,7 @@ object PinManager {
     private fun action(c: Context, pkg: String, action: String, icon: Int, title: String): Notification.Action {
         val i = Intent(c, PinActionReceiver::class.java)
             .setAction(action)
-            .setData(Uri.parse("playerpin://action/$pkg/$action"))
+            .setData(Uri.parse("mediabooster://action/$pkg/$action"))
             .putExtra(PinActionReceiver.EXTRA_PKG, pkg)
         val pi = PendingIntent.getBroadcast(c, 0, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
         return Notification.Action.Builder(Icon.createWithResource(c, icon), title, pi).build()
@@ -359,7 +373,7 @@ object PinManager {
 
     private fun launch(c: Context, pkg: String): PendingIntent? {
         val i = c.packageManager.getLaunchIntentForPackage(pkg) ?: return null
-        i.data = Uri.parse("playerpin://open/$pkg")
+        i.data = Uri.parse("mediabooster://open/$pkg")
         return PendingIntent.getActivity(c, pkg.hashCode(), i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 }
