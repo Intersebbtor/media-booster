@@ -127,6 +127,9 @@ object PinManager {
             }
         }
         for ((pkg, t) in realPosted) if (pkg in remembered) Prefs.touch(c, pkg, t)
+        // Allowed but never seen playing (fresh install, just ticked): queue at the end
+        val known = Prefs.history(c).map { it.pkg }.toSet()
+        remembered.filter { it !in known }.forEachIndexed { i, pkg -> Prefs.touch(c, pkg, 1L + i) }
 
         // Real cards currently on screen, from any app (browsers too)
         val realShown = mutableSetOf<String>()
