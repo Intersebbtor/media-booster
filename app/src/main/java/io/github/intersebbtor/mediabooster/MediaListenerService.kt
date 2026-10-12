@@ -38,8 +38,25 @@ class MediaListenerService : NotificationListenerService() {
         handler.postDelayed(refresh, 300)
     }
 
+    private val screenReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+            when (intent.action) {
+                android.content.Intent.ACTION_SCREEN_ON -> PinManager.onScreenOn(this@MediaListenerService)
+                android.content.Intent.ACTION_SCREEN_OFF -> PinManager.onScreenOff()
+            }
+        }
+    }
+    private var screenRegistered = false
+
     override fun onListenerConnected() {
         instance = this
+        if (!screenRegistered) {
+            registerReceiver(screenReceiver, android.content.IntentFilter().apply {
+                addAction(android.content.Intent.ACTION_SCREEN_ON)
+                addAction(android.content.Intent.ACTION_SCREEN_OFF)
+            })
+            screenRegistered = true
+        }
         val m = getSystemService(MediaSessionManager::class.java)
         msm = m
         val cn = MediaSessions.listenerComponent(this)
@@ -59,17 +76,23 @@ class MediaListenerService : NotificationListenerService() {
 
     override fun onDestroy() {
         instance = null
+        if (screenRegistered) runCatching { unregisterReceiver(screenReceiver) }
+        screenRegistered = false
         untrackAll()
         PinManager.releaseAll(this)
         super.onDestroy()
     }
 
+    // Our own cards are posted as slot packages (…mediabooster.slotN). Reacting to
+    // them would refresh, repost and loop forever.
+    private fun isOwn(sbn: StatusBarNotification) = sbn.packageName.startsWith(packageName)
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (sbn.packageName != packageName && isMedia(sbn)) schedule()
+        if (!isOwn(sbn) && isMedia(sbn)) schedule()
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        if (sbn.packageName != packageName && isMedia(sbn)) schedule()
+        if (!isOwn(sbn) && isMedia(sbn)) schedule()
     }
 
     private fun isMedia(sbn: StatusBarNotification) =

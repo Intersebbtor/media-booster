@@ -48,19 +48,19 @@ From the [latest release](https://github.com/Intersebbtor/media-booster/releases
 Connect your phone, allow USB debugging on the phone, then in the download folder:
 
 ```bash
-adb install -r MediaBooster-1.0.0.apk
+adb install -r MediaBooster-1.0.1.apk
 ```
 
 ```bash
-adb install -r MediaBooster-Slot1-1.0.0.apk
+adb install -r MediaBooster-Slot1-1.0.1.apk
 ```
 
 ```bash
-adb install -r MediaBooster-Slot2-1.0.0.apk
+adb install -r MediaBooster-Slot2-1.0.1.apk
 ```
 
 ```bash
-adb install -r MediaBooster-Slot3-1.0.0.apk
+adb install -r MediaBooster-Slot3-1.0.1.apk
 ```
 
 ### 2. Set it up in the app

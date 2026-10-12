@@ -269,7 +269,9 @@ object PinManager {
 
         // Repost only when content changed, or keep-alive is due
         val target = targetFor(c, index)
-        val key = "$shownTitle|$shownSub|$playing|$canPrev|$canNext|${art?.generationId}|$target|$index"
+        // Bitmaps are reloaded on every refresh, so compare by content, not identity
+        val artKey = art?.let { "${it.width}x${it.height}:${it.getPixel(it.width / 2, it.height / 2)}:${it.getPixel(it.width / 4, it.height / 4)}" }
+        val key = "$shownTitle|$shownSub|$playing|$canPrev|$canNext|$artKey|$target|$index"
         val due = System.currentTimeMillis() - p.postedAt > KEEP_ALIVE_MS
         if (p.visible && key == p.lastKey && !due) return
         p.lastKey = key
@@ -285,8 +287,10 @@ object PinManager {
             cancel(nm, p.target, p.notifId)
             p.visible = false
         }
+        // Same id on keep-alive: an update already restarts the system's paused-player
+        // timeout. A new id would count as a new notification and light up the AOD.
         val oldId = p.notifId
-        val newId = if (p.visible && due) (if (oldId % 2 == 0) oldId + 1 else oldId - 1) else oldId
+        val newId = oldId
 
         val b = Notification.Builder(c, CHANNEL)
             .setSmallIcon(Icon.createWithResource(c, R.drawable.ic_booster))
@@ -348,9 +352,22 @@ object PinManager {
         handler.postDelayed(r, delay.coerceAtLeast(1000))
     }
 
+    /** Screen came on: refresh right away, cards may have timed out while it was off. */
+    fun onScreenOn(ctx: Context) {
+        pins.values.forEach { it.postedAt = 0L }
+        MediaListenerService.instance?.refreshPins() ?: refresh(ctx, null)
+    }
+
+    fun onScreenOff() {
+        keepAlive?.let { handler.removeCallbacks(it) }
+    }
+
     private fun scheduleKeepAlive() {
         keepAlive?.let { handler.removeCallbacks(it) }
         if (pins.values.none { it.visible }) return
+        // Nobody sees the panel with the screen off. Updating then only wakes the AOD.
+        val interactive = appCtx?.getSystemService(android.os.PowerManager::class.java)?.isInteractive ?: true
+        if (!interactive) return
         val r = Runnable {
             val c = appCtx ?: return@Runnable
             MediaListenerService.instance?.refreshPins() ?: refresh(c, null)
