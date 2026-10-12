@@ -1,12 +1,32 @@
-# Media Booster for OnePlus
+<p align="center">
+  <img src="docs/setup.png" width="340" alt="Media Booster setup screen with three player places">
+</p>
 
-Keeps your recently used media players in the OnePlus / ColorOS quick settings media panel, even after the apps were closed or killed in the background.
+<h1 align="center">Media Booster for OnePlus</h1>
 
-- The media panel has 3 places (ColorOS limit). Players that are open in their app take a place first, from any app (browsers too).
-- Free places are filled with stand-in cards from a history of the last 5 used apps, most recent first. Only apps you allow ("Apps to remember") get stand-ins.
-- A stand-in shows the last title, artist and cover. Controls are forwarded to the real app.
-- A stand-in hides while the real app's own card is on screen, and takes over after the system times out the paused player (~5 min on ColorOS, counted from the app's last notification update).
-- Cards refresh every 2 minutes so the system does not time them out.
+<p align="center">
+  <b>Your recent players stay in quick settings.</b><br>
+  Even after OnePlus killed Spotify, Audible or Pocket Casts in the background.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Intersebbtor/media-booster/releases/latest"><b>Download</b></a> ·
+  Android 12+ · Built for OnePlus / ColorOS · No internet permission · MIT
+</p>
+
+---
+
+## The problem
+
+OnePlus has a nice media tile in quick settings, with a player panel you can swipe through. But a player only shows up there while its app is still alive. OnePlus kills paused apps after a few minutes, and the system drops paused players after about 5 minutes anyway. So the tile mostly says *Not playing*.
+
+## What Media Booster does
+
+- **Keeps your last players in the panel.** When an app is gone, Media Booster shows a stand-in card with the last title, artist and cover. Play, pause and skip are forwarded to the real app.
+- **3 places, used dynamically.** The panel shows at most 3 players. Players that are actually open (any app, also a browser) get a place first. Free places are filled with your most recently used apps.
+- **Background queue.** Up to 5 recent apps are remembered. When a place frees up, the next one moves in.
+- **You choose which apps.** Only apps you tick under *Apps to remember* get stand-ins. A website in your browser only shows while it's open.
+- **Light on battery.** One small background service. No polling, no audio, no internet permission.
 
 ## Install
 
@@ -22,25 +42,25 @@ You need a computer with **adb** once. Android blocks notification access for ap
 
 From the [latest release](https://github.com/Intersebbtor/media-booster/releases/latest) download:
 
-- `MediaBooster-x.y.z-release.apk` (the app)
-- `slot-slot1-release.apk`, `slot-slot2-release.apk`, `slot-slot3-release.apk` (one per place in the media panel)
+- `MediaBooster-x.y.z.apk` (the app)
+- `MediaBooster-Slot1-x.y.z.apk`, `MediaBooster-Slot2-x.y.z.apk`, `MediaBooster-Slot3-x.y.z.apk` (one per place in the media panel)
 
 Connect your phone, allow USB debugging on the phone, then in the download folder:
 
 ```bash
-adb install -r MediaBooster-1.0.0-release.apk
+adb install -r MediaBooster-1.0.0.apk
 ```
 
 ```bash
-adb install -r slot-slot1-release.apk
+adb install -r MediaBooster-Slot1-1.0.0.apk
 ```
 
 ```bash
-adb install -r slot-slot2-release.apk
+adb install -r MediaBooster-Slot2-1.0.0.apk
 ```
 
 ```bash
-adb install -r slot-slot3-release.apk
+adb install -r MediaBooster-Slot3-1.0.0.apk
 ```
 
 ### 2. Set it up in the app
@@ -68,4 +88,15 @@ ColorOS groups media cards by app, so several cards from one app would all show 
 ./gradlew :app:assembleRelease :slot:assembleRelease
 ```
 
-Outputs: `app/build/outputs/apk/release/` and `slot/build/outputs/apk/slot{1,2,3}/release/`.
+Outputs: `app/build/outputs/apk/release/` and `slot/build/outputs/apk/slot{1,2,3}/release/`. Without a `keystore.properties` the builds use your debug key. App and slots must be signed with the same key.
+
+## Known limitations
+
+- The small 2x2 media tile shows one player. Tap it to open the panel and swipe.
+- Stand-in cards show the Media Booster badge; the app name is in the subtitle.
+- ▶ on a stand-in wakes the real app. Some apps refuse to be started from outside; tap the card to open the app instead.
+- Tested on OnePlus with ColorOS / OxygenOS 16. Other Android versions should work, but the 3-place limit and the timing are ColorOS behaviour.
+
+## License
+
+[MIT](LICENSE)
