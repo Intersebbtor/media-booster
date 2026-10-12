@@ -73,4 +73,10 @@
     <string name="sec_bg">Hintergrund</string>
     <string name="bg_empty">Nichts wartet. Freigegebene Player landen hier, wenn kein Platz frei ist.</string>
     <string name="place_free">Frei</string>
+    <string name="slots_title">Player-Slots</string>
+    <string name="slots_ok">Aktiv. Jeder Platz bekommt eine eigene Karte.</string>
+    <string name="slots_missing">%1$d von %2$d Slot-Apps installiert. Sie geben jedem Platz eine eigene Karte.</string>
+    <string name="slots_inactive">Installiert, aber noch nicht aktiviert.</string>
+    <string name="slots_download">Download</string>
+    <string name="slots_activate">Aktivieren</string>
 </resources>

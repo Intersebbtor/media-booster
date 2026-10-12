@@ -26,6 +26,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 
+private const val RELEASES_URL = "https://github.com/Intersebbtor/media-booster/releases/latest"
+
 class ConfigActivity : Activity() {
 
     private var widgetId = Prefs.GLOBAL
@@ -79,6 +81,8 @@ class ConfigActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Activation runs slot by slot: each one returns here, then the next starts
+        if (activatingSlots && !activateNextSlot()) activatingSlots = false
         // Fresh panel state for the status labels
         MediaListenerService.instance?.refreshPins()
         render()
@@ -117,13 +121,36 @@ class ConfigActivity : Activity() {
         val access = MediaSessions.hasAccess(this)
         val battery = getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
         val post = checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (access && battery && post) {
+        val slotsInstalled = PinManager.slotsInstalled(this)
+        val slotsPending = PinManager.slotsNeedingActivation(this, Prefs.VISIBLE)
+        val slots = slotsInstalled == Prefs.VISIBLE && slotsPending.isEmpty()
+        if (access && battery && post && slots) {
             content.addView(statusLine(getString(R.string.all_set), ok = true))
             return
         }
 
         content.addView(sectionTitle(getString(R.string.sec_setup)))
         val card = card()
+
+        // Slot shells: one per panel place, each must be installed and activated once
+        card.addView(checkRow(
+            getString(R.string.slots_title),
+            when {
+                slots -> getString(R.string.slots_ok)
+                slotsInstalled < Prefs.VISIBLE -> getString(R.string.slots_missing, slotsInstalled, Prefs.VISIBLE)
+                else -> getString(R.string.slots_inactive)
+            },
+            slots,
+            getString(if (slotsInstalled < Prefs.VISIBLE) R.string.slots_download else R.string.slots_activate),
+        ) {
+            if (slotsInstalled < Prefs.VISIBLE) {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(RELEASES_URL)))
+            } else {
+                activatingSlots = true
+                activateNextSlot()
+            }
+        })
+        card.addView(divider())
 
         card.addView(checkRow(
             getString(R.string.post_title),
@@ -314,6 +341,16 @@ class ConfigActivity : Activity() {
         background = ripple(null, 24)
         layoutParams = LinearLayout.LayoutParams(dp(44), dp(44))
         setOnClickListener { onClick() }
+    }
+
+    private var activatingSlots = false
+
+    /** Starts the next slot's one-time activation. Returns false when none is left. */
+    private fun activateNextSlot(): Boolean {
+        val next = PinManager.slotsNeedingActivation(this, Prefs.VISIBLE).firstOrNull() ?: return false
+        return runCatching {
+            startActivity(Intent().setClassName(next, "io.github.intersebbtor.mediabooster.slot.ActivateActivity"))
+        }.isSuccess
     }
 
     private var query = ""

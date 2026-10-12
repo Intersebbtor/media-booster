@@ -40,6 +40,10 @@ object PinManager {
 
     fun slotPackage(index: Int) = "io.github.intersebbtor.mediabooster.slot${index + 1}"
 
+    fun slotsInstalled(c: Context): Int = (0 until Prefs.VISIBLE).count { i ->
+        runCatching { c.packageManager.getPackageInfo(slotPackage(i), 0) }.isSuccess
+    }
+
     /** Slot shells that are installed but have not granted delegation yet. */
     fun slotsNeedingActivation(c: Context, count: Int): List<String> {
         val nm = c.getSystemService(NotificationManager::class.java)

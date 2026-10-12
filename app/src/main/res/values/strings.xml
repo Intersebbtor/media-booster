@@ -75,4 +75,10 @@
     <string name="sec_bg">Background</string>
     <string name="bg_empty">Nothing waiting. Players you allow below land here when no place is free.</string>
     <string name="place_free">Free</string>
+    <string name="slots_title">Player slots</string>
+    <string name="slots_ok">Active. Each place gets its own card.</string>
+    <string name="slots_missing">%1$d of %2$d slot apps installed. They give each place its own card.</string>
+    <string name="slots_inactive">Installed, but not activated yet.</string>
+    <string name="slots_download">Download</string>
+    <string name="slots_activate">Activate</string>
 </resources>
