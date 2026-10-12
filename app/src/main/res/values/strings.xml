@@ -18,7 +18,7 @@
     <string name="not_running">Not running · ▶ to start</string>
     <string name="cd_pause_fmt">Pause %s</string>
     <string name="cd_play_fmt">Play %s</string>
-    <string name="subtitle_edit">Keep your players in the system media controls, even after the app was closed.</string>
+    <string name="subtitle_edit">Keeps your last players in quick settings, even after the apps were closed.</string>
     <string name="subtitle_home">Your media players, stacked in one widget.</string>
     <string name="all_set">✓ All set</string>
     <string name="sec_setup">Setup</string>
@@ -34,7 +34,7 @@
     <string name="allow">Allow</string>
     <string name="sec_rows">Rows</string>
     <string name="rows_question">How many players should stay pinned?</string>
-    <string name="rows_hint">Pinned players show up in the media area of your quick settings and swipe like a carousel.</string>
+    <string name="rows_hint">Pinned players show up in the media area of your quick settings. Tap the media tile to open the player panel and swipe through them. The panel shows at most 3 players.</string>
     <string name="rows_cd">%d rows</string>
     <string name="sec_players">Pinned players</string>
     <string name="players_hint">Tap a row to change the app. Use ↑ ↓ to reorder.</string>
@@ -60,4 +60,15 @@
     <string name="post_title">Notifications</string>
     <string name="post_ok">Active. Pinned players can be shown.</string>
     <string name="post_missing">Required to show pinned players in quick settings.</string>
+    <string name="sec_now">Recent players</string>
+    <string name="st_live">Open in its app</string>
+    <string name="st_pinned">Kept in quick settings</string>
+    <string name="st_waiting">Remembered, waiting for a free place</string>
+    <string name="hist_empty">Nothing yet. Play something in one of the apps below.</string>
+    <string name="hist_hint">The media panel shows 3 players. Players that are open come first, free places are filled from this list, most recent first.</string>
+    <string name="sec_remember">Apps to remember</string>
+    <string name="remember_hint">Only these apps stay in quick settings after they close. Other apps, like a browser, only show while they are open.</string>
+    <string name="forget_cd">Forget</string>
+    <string name="search_hint">Search apps</string>
+    <string name="search_empty">No app found.</string>
 </resources>

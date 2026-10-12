@@ -15,7 +15,7 @@
     <string name="not_running">Nicht aktiv · ▶ zum Starten</string>
     <string name="cd_pause_fmt">%s pausieren</string>
     <string name="cd_play_fmt">%s abspielen</string>
-    <string name="subtitle_edit">Hält deine Player in der Medien-Steuerung des Systems, auch wenn die App längst beendet ist.</string>
+    <string name="subtitle_edit">Hält deine zuletzt genutzten Player in den Schnelleinstellungen, auch wenn die Apps längst beendet sind.</string>
     <string name="subtitle_home">Deine Media-Player, gestapelt in einem Widget.</string>
     <string name="all_set">✓ Alles eingerichtet</string>
     <string name="sec_setup">Einrichtung</string>
@@ -31,7 +31,7 @@
     <string name="allow">Erlauben</string>
     <string name="sec_rows">Zeilen</string>
     <string name="rows_question">Wie viele Player sollen angepinnt bleiben?</string>
-    <string name="rows_hint">Angepinnte Player erscheinen im Medienbereich der Schnelleinstellungen und lassen sich wie ein Karussell durchwischen.</string>
+    <string name="rows_hint">Angepinnte Player erscheinen im Medienbereich der Schnelleinstellungen. Tippe auf die Medien-Kachel, um das Player-Panel zu öffnen, und wische durch. Das Panel zeigt höchstens 3 Player.</string>
     <string name="rows_cd">%d Zeilen</string>
     <string name="sec_players">Angepinnte Player</string>
     <string name="players_hint">Tippe auf eine Zeile, um die App zu ändern. Mit ↑ ↓ änderst du die Reihenfolge.</string>
@@ -58,4 +58,15 @@
     <string name="post_title">Benachrichtigungen</string>
     <string name="post_ok">Aktiv. Angepinnte Player können angezeigt werden.</string>
     <string name="post_missing">Nötig, um angepinnte Player in den Schnelleinstellungen anzuzeigen.</string>
+    <string name="sec_now">Zuletzt genutzt</string>
+    <string name="st_live">Offen in der App</string>
+    <string name="st_pinned">In den Schnelleinstellungen gehalten</string>
+    <string name="st_waiting">Gemerkt, wartet auf freien Platz</string>
+    <string name="hist_empty">Noch nichts. Spiel etwas in einer der Apps unten ab.</string>
+    <string name="hist_hint">Das Medien-Panel zeigt 3 Player. Offene Player haben Vorrang, freie Plätze werden aus dieser Liste aufgefüllt, der zuletzt genutzte zuerst.</string>
+    <string name="sec_remember">Diese Apps merken</string>
+    <string name="remember_hint">Nur diese Apps bleiben nach dem Schließen in den Schnelleinstellungen. Andere Apps, z. B. ein Browser, erscheinen nur, solange sie offen sind.</string>
+    <string name="forget_cd">Vergessen</string>
+    <string name="search_hint">Apps suchen</string>
+    <string name="search_empty">Keine App gefunden.</string>
 </resources>

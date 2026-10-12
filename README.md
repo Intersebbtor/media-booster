@@ -2,8 +2,10 @@
 
 Keeps chosen media players in the system media controls (quick settings), even after the app was killed.
 
-- A pinned app without its own visible player gets a stand-in card: last title, artist and cover, with controls forwarded to the real app.
-- The stand-in hides while the real app plays, and takes over after the system times out the paused player (~5 min on ColorOS).
+- The media panel has 3 places (ColorOS limit). Players that are open in their app take a place first, from any app (browsers too).
+- Free places are filled with stand-in cards from a history of the last 5 used apps, most recent first. Only apps you allow ("Apps to remember") get stand-ins.
+- A stand-in shows the last title, artist and cover. Controls are forwarded to the real app.
+- A stand-in hides while the real app's own card is on screen, and takes over after the system times out the paused player (~5 min on ColorOS, counted from the app's last notification update).
 - Cards refresh every 2 minutes so the system does not time them out.
 
 ## Slot shells

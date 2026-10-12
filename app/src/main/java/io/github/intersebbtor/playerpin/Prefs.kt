@@ -8,6 +8,8 @@ import java.io.File
 /** Slot config per widget + last-known track per app. */
 object Prefs {
     const val SLOTS = 4
+    /** ColorOS shows at most 3 players in its media panel. */
+    const val MAX_PINS = 3
     /** Single global config, reuses the per-widget storage with a fixed id. */
     const val GLOBAL = 0
     const val DEFAULT_ROWS = 3
@@ -36,6 +38,60 @@ object Prefs {
         val e = sp(ctx).edit()
         repeat(SLOTS) { e.remove("w_${widgetId}_$it") }
         e.remove("w_${widgetId}_configured").remove("w_${widgetId}_rows").apply()
+    }
+
+    /** Places in the system media panel (ColorOS shows 3). */
+    const val VISIBLE = 3
+    /** How many recently used apps are remembered. */
+    const val HISTORY = 5
+
+    /** Apps allowed to keep a stand-in card after they close. */
+    fun remembered(ctx: Context): Set<String> {
+        val sp = sp(ctx)
+        if (!sp.getBoolean("remember_init", false)) {
+            // Migrate from the fixed pin list of the first prototype
+            val old = slots(ctx, GLOBAL).filterNotNull()
+            val now = System.currentTimeMillis()
+            sp.edit().putStringSet("remember", old.toSet()).putBoolean("remember_init", true).apply()
+            old.forEachIndexed { i, pkg -> touch(ctx, pkg, now - i * 1000L) }
+        }
+        return sp.getStringSet("remember", emptySet()).orEmpty().toSet()
+    }
+
+    fun setRemembered(ctx: Context, pkg: String, on: Boolean) {
+        val set = remembered(ctx).toMutableSet()
+        if (on) set += pkg else set -= pkg
+        sp(ctx).edit().putStringSet("remember", set).apply()
+        if (!on) forget(ctx, pkg)
+    }
+
+    data class Entry(val pkg: String, val time: Long)
+
+    /** Most recently used first. */
+    fun history(ctx: Context): List<Entry> =
+        sp(ctx).getString("history", "").orEmpty().split(";").mapNotNull { e ->
+            val parts = e.split("|")
+            if (parts.size == 2) parts[1].toLongOrNull()?.let { Entry(parts[0], it) } else null
+        }.sortedByDescending { it.time }
+
+    private fun saveHistory(ctx: Context, list: List<Entry>) {
+        val trimmed = list.sortedByDescending { it.time }.distinctBy { it.pkg }.take(HISTORY)
+        sp(ctx).edit().putString("history", trimmed.joinToString(";") { "${it.pkg}|${it.time}" }).apply()
+    }
+
+    /** Mark an app as used at [time]. Returns true if the history changed. */
+    fun touch(ctx: Context, pkg: String, time: Long): Boolean {
+        val list = history(ctx).toMutableList()
+        val old = list.firstOrNull { it.pkg == pkg }
+        if (old != null && old.time >= time - 1000) return false
+        list.removeAll { it.pkg == pkg }
+        list += Entry(pkg, time)
+        saveHistory(ctx, list)
+        return true
+    }
+
+    fun forget(ctx: Context, pkg: String) {
+        saveHistory(ctx, history(ctx).filter { it.pkg != pkg })
     }
 
     data class Last(val title: String, val subtitle: String?)

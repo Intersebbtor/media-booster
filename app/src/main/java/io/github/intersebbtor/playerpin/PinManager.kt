@@ -85,45 +85,68 @@ object PinManager {
     private var appCtx: Context? = null
     private var keepAlive: Runnable? = null
 
-    fun pinnedPackages(ctx: Context): List<String> {
-        val rows = Prefs.rows(ctx, Prefs.GLOBAL)
-        return Prefs.slots(ctx, Prefs.GLOBAL).take(rows).filterNotNull().distinct()
-    }
+    enum class Status { LIVE, PINNED, WAITING }
 
-    /** Recompute all proxies. Call from the listener service (needs session access). */
+    /** For the UI: what each app currently is in the panel. */
+    @Volatile
+    var status: Map<String, Status> = emptyMap()
+        private set
+
+    /** Recompute all stand-ins. Call from the listener service (needs session access). */
     fun refresh(ctx: Context, active: Array<StatusBarNotification>?) {
         val c = ctx.applicationContext
         appCtx = c
         ensureChannel(c)
         cleanupOnce(c)
         val sessions = MediaSessions.controllers(c) ?: emptyMap()
-        val visibleReal = active.orEmpty()
-            .filter { it.packageName != c.packageName && it.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION) }
-            .map { it.packageName }
-            .toSet()
+        val remembered = Prefs.remembered(c)
+        val now = System.currentTimeMillis()
 
-        val wanted = pinnedPackages(c)
-        // Drop unpinned
-        pins.keys.filter { it !in wanted }.forEach { release(c, it) }
+        // Latest media notification post time per real app. The system restarts its
+        // paused-player timeout on every post, so this tells how long the real card stays.
+        val realPosted = HashMap<String, Long>()
+        active.orEmpty()
+            .filter { !it.packageName.startsWith(c.packageName) && it.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION) }
+            .forEach { realPosted[it.packageName] = maxOf(realPosted[it.packageName] ?: 0L, it.postTime) }
 
-        wanted.forEachIndexed { index, pkg ->
-            if (MediaApps.label(c, pkg) == null) {
-                release(c, pkg)
-                return@forEachIndexed
+        // Feed the history: playing now, or a fresh player card
+        for ((pkg, ctrl) in sessions) {
+            if (MediaSessions.isPlaying(ctrl)) {
+                lastPlaying[pkg] = now
+                if (pkg in remembered) Prefs.touch(c, pkg, now)
             }
-            val real = sessions[pkg]
-            val now = System.currentTimeMillis()
-            val playing = real != null && MediaSessions.isPlaying(real)
-            if (playing) lastPlaying[pkg] = now
-            // Real card is on screen while playing and until the system times it out
-            val sinceStop = now - (lastPlaying[pkg] ?: 0L)
-            val realCardShown = playing || (pkg in visibleReal && sinceStop < SYSTEM_TIMEOUT_MS)
-            if (realCardShown) {
-                hide(c, pkg)
-                if (!playing) scheduleTakeOver(SYSTEM_TIMEOUT_MS - sinceStop)
-            } else {
-                show(c, pkg, index, real)
+        }
+        for ((pkg, t) in realPosted) if (pkg in remembered) Prefs.touch(c, pkg, t)
+
+        // Real cards currently on screen, from any app (browsers too)
+        val realShown = mutableSetOf<String>()
+        var nextTimeout = Long.MAX_VALUE
+        for ((pkg, posted) in realPosted) {
+            val playing = sessions[pkg]?.let { MediaSessions.isPlaying(it) } == true
+            val since = minOf(now - posted, now - (lastPlaying[pkg] ?: 0L))
+            if (playing || since < SYSTEM_TIMEOUT_MS) {
+                realShown += pkg
+                if (!playing) nextTimeout = minOf(nextTimeout, SYSTEM_TIMEOUT_MS - since)
             }
+        }
+        if (nextTimeout != Long.MAX_VALUE) scheduleTakeOver(nextTimeout)
+
+        // Fill the free places with the most recently used remembered apps
+        val free = (Prefs.VISIBLE - realShown.size).coerceAtLeast(0)
+        val visible = Prefs.history(c).map { it.pkg }
+            .filter { it in remembered && it !in realShown && MediaApps.label(c, it) != null }
+            .take(free)
+
+        pins.keys.filter { it !in visible }.forEach { release(c, it) }
+        // The panel puts the most recently posted card first: post the last place first
+        for (index in visible.indices.reversed()) {
+            show(c, visible[index], index, sessions[visible[index]])
+        }
+
+        status = buildMap {
+            Prefs.history(c).forEach { put(it.pkg, Status.WAITING) }
+            visible.forEach { put(it, Status.PINNED) }
+            realShown.forEach { put(it, Status.LIVE) }
         }
         scheduleKeepAlive()
     }

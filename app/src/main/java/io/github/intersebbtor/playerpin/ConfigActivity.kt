@@ -34,6 +34,7 @@ class ConfigActivity : Activity() {
     private val slots = arrayOfNulls<String>(Prefs.SLOTS)
     private var rows = Prefs.DEFAULT_ROWS
     private lateinit var content: LinearLayout
+    private lateinit var scroll: ScrollView
 
     private val known = listOf(
         "com.spotify.music",
@@ -53,7 +54,7 @@ class ConfigActivity : Activity() {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         readIntent(intent)
 
-        val scroll = ScrollView(this).apply { isFillViewport = true }
+        scroll = ScrollView(this).apply { isFillViewport = true }
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(28), dp(20), dp(24))
@@ -61,7 +62,8 @@ class ConfigActivity : Activity() {
         scroll.addView(content)
         scroll.setOnApplyWindowInsetsListener { v, insets ->
             val b = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
-            v.setPadding(b.left, b.top, b.right, b.bottom)
+            val ime = insets.getInsets(WindowInsets.Type.ime())
+            v.setPadding(b.left, b.top, b.right, maxOf(b.bottom, ime.bottom))
             insets
         }
         scroll.setBackgroundColor(getColor(R.color.widget_bg))
@@ -77,31 +79,14 @@ class ConfigActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        // Fresh panel state for the status labels
+        MediaListenerService.instance?.refreshPins()
         render()
     }
 
     private fun readIntent(i: Intent) {
         widgetId = Prefs.GLOBAL
         addFlow = false
-        loadSlots()
-    }
-
-    private fun loadSlots() {
-        val saved = Prefs.slots(this, widgetId)
-        rows = Prefs.rows(this, widgetId)
-        if (Prefs.isConfigured(this, widgetId)) {
-            saved.copyInto(slots)
-        } else {
-            suggest().forEachIndexed { i, p -> slots[i] = p }
-        }
-    }
-
-    /** Pre-fill: running media apps first, then well-known ones that are installed. */
-    private fun suggest(): List<String?> {
-        val installed = MediaApps.mediaApps(this).map { it.pkg }.toSet()
-        val active = MediaSessions.controllers(this)?.keys.orEmpty()
-        val order = (active + known).filter { it in installed }.distinct()
-        return List(Prefs.SLOTS) { order.getOrNull(it) }
     }
 
     // ---------- UI ----------
@@ -171,129 +156,109 @@ class ConfigActivity : Activity() {
     }
 
     private fun renderSlots() {
-        content.addView(sectionTitle(getString(R.string.sec_rows)))
-        content.addView(card().apply { addView(rowCountPicker()) })
+        val pm = PinManager
+        val status = pm.status
+        val remembered = Prefs.remembered(this)
+        val history = Prefs.history(this)
 
-        content.addView(sectionTitle(getString(R.string.sec_players)))
-        val card = card()
-        for (i in 0 until rows) {
-            if (i > 0) card.addView(divider())
-            card.addView(slotRow(i))
+        content.addView(sectionTitle(getString(R.string.sec_now)))
+        val now = card()
+        if (history.isEmpty()) {
+            now.addView(text(getString(R.string.hist_empty), 14f, secondary = true))
         }
-        content.addView(card)
-        content.addView(text(
-            getString(R.string.players_hint),
-            13f, secondary = true, top = 8,
-        ))
-
-        content.addView(primaryButton(getString(if (addFlow) R.string.add_widget else R.string.save)) { save() })
-    }
-
-    private fun slotRow(i: Int): View {
-        val pkg = slots[i]
-        val label = pkg?.let { MediaApps.label(this, it) }
-        val trailing = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(iconButton("↑", enabled = i > 0) { swap(i, i - 1) })
-            addView(iconButton("↓", enabled = i < rows - 1) { swap(i, i + 1) })
+        history.forEachIndexed { i, e ->
+            if (i > 0) now.addView(divider())
+            val st = status[e.pkg] ?: PinManager.Status.WAITING
+            now.addView(row(
+                icon = MediaApps.icon(this, e.pkg),
+                title = MediaApps.label(this, e.pkg) ?: e.pkg,
+                subtitle = getString(when (st) {
+                    PinManager.Status.LIVE -> R.string.st_live
+                    PinManager.Status.PINNED -> R.string.st_pinned
+                    PinManager.Status.WAITING -> R.string.st_waiting
+                }),
+                trailing = iconButton("✕", enabled = true) {
+                    Prefs.forget(this, e.pkg)
+                    applyChange()
+                }.apply { contentDescription = getString(R.string.forget_cd) },
+                onClick = null,
+            ))
         }
-        return row(
-            icon = pkg?.let { MediaApps.icon(this, it) },
-            title = label ?: getString(if (pkg != null) R.string.not_installed else R.string.empty),
-            subtitle = getString(if (pkg == null) R.string.row_tap_choose else R.string.row_n, i + 1),
-            trailing = trailing,
-        ) { pick(i) }
-    }
+        content.addView(now)
+        content.addView(text(getString(R.string.hist_hint), 13f, secondary = true, top = 8))
 
-    private fun rowCountPicker(): View = LinearLayout(this).apply {
-        orientation = LinearLayout.VERTICAL
-        addView(text(getString(R.string.rows_question), 15f, bold = true))
-        addView(LinearLayout(this@ConfigActivity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)).apply { topMargin = dp(12) }
-            for (n in 1..Prefs.SLOTS) {
-                val selected = n == rows
-                addView(TextView(this@ConfigActivity).apply {
-                    text = n.toString()
-                    textSize = 17f
-                    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    gravity = Gravity.CENTER
-                    setTextColor(getColor(if (selected) R.color.play_icon else R.color.text_primary))
-                    background = ripple(rounded(if (selected) R.color.play_bg else R.color.slot_active_bg, 14), 14)
-                    contentDescription = getString(R.string.rows_cd, n)
-                    layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                        if (n > 1) marginStart = dp(8)
-                    }
-                    setOnClickListener {
-                        rows = n
-                        render()
-                    }
-                })
+        content.addView(sectionTitle(getString(R.string.sec_remember)))
+        val search = android.widget.EditText(this).apply {
+            hint = getString(R.string.search_hint)
+            setText(query)
+            setSingleLine()
+            textSize = 16f
+            setTextColor(getColor(R.color.text_primary))
+            setHintTextColor(getColor(R.color.text_secondary))
+            background = rounded(R.color.slot_bg, 50)
+            setPadding(dp(18), dp(12), dp(18), dp(12))
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                .apply { bottomMargin = dp(10) }
+        }
+        content.addView(search)
+        // Keyboard covers the results otherwise: move the field to the top
+        search.setOnFocusChangeListener { v, focused ->
+            if (focused) v.postDelayed({ scroll.smoothScrollTo(0, v.top - dp(12)) }, 250)
+        }
+        search.setOnClickListener { v -> v.postDelayed({ scroll.smoothScrollTo(0, v.top - dp(12)) }, 250) }
+        val list = card()
+        content.addView(list)
+        fillAppList(list, remembered, history.map { it.pkg })
+        search.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(t: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(e: android.text.Editable?) {
+                query = e?.toString().orEmpty()
+                fillAppList(list, Prefs.remembered(this@ConfigActivity), Prefs.history(this@ConfigActivity).map { it.pkg })
             }
         })
-        addView(text(
-            getString(R.string.rows_hint),
-            13f, secondary = true, top = 10,
-        ))
+        content.addView(text(getString(R.string.remember_hint), 13f, secondary = true, top = 8))
     }
 
-    private fun swap(a: Int, b: Int) {
-        val t = slots[a]; slots[a] = slots[b]; slots[b] = t
-        render()
-    }
+    private var query = ""
+    private var allApps: List<AppEntry>? = null
 
-    private fun pick(slot: Int, all: Boolean = false) {
-        val apps = if (all) MediaApps.allApps(this) else MediaApps.mediaApps(this)
-        val entries = mutableListOf<AppEntry?>(null)
-        entries += apps
-        if (!all) entries += AppEntry("__more__", getString(R.string.other_app))
-
-        val adapter = object : BaseAdapter() {
-            override fun getCount() = entries.size
-            override fun getItem(p: Int) = entries[p]
-            override fun getItemId(p: Int) = p.toLong()
-            override fun getView(p: Int, convert: View?, parent: ViewGroup?): View {
-                val e = entries[p]
-                val selected = e?.pkg == slots[slot]
-                return row(
-                    icon = e?.pkg?.takeIf { it != "__more__" }?.let { MediaApps.icon(this@ConfigActivity, it) },
-                    title = e?.label ?: getString(R.string.leave_empty),
-                    subtitle = null,
-                    trailing = if (selected) text("✓", 18f, accent = true, bold = true) else null,
-                    padH = 24,
-                    onClick = null,
-                )
-            }
+    /** Media apps by default. While searching, all launchable apps (e.g. browsers). */
+    private fun fillAppList(list: LinearLayout, remembered: Set<String>, history: List<String>) {
+        list.removeAllViews()
+        val q = query.trim().lowercase()
+        val base = if (q.isEmpty()) {
+            MediaApps.mediaApps(this) +
+                (remembered + history).mapNotNull { p -> MediaApps.label(this, p)?.let { AppEntry(p, it) } }
+        } else {
+            (allApps ?: MediaApps.allApps(this).also { allApps = it }).filter { q in it.label.lowercase() }
         }
-
-        AlertDialog.Builder(this)
-            .setTitle(if (all) getString(R.string.all_apps) else getString(R.string.player_for_row, slot + 1))
-            .setAdapter(adapter) { d, which ->
-                val e = entries[which]
-                d.dismiss()
-                when {
-                    e?.pkg == "__more__" -> pick(slot, all = true)
-                    else -> {
-                        slots[slot] = e?.pkg
-                        render()
-                    }
-                }
+        val apps = base.distinctBy { it.pkg }
+            .sortedWith(compareByDescending<AppEntry> { it.pkg in remembered }.thenBy { it.label.lowercase() })
+        if (apps.isEmpty()) list.addView(text(getString(R.string.search_empty), 14f, secondary = true))
+        apps.forEachIndexed { i, app ->
+            if (i > 0) list.addView(divider())
+            val sw = android.widget.Switch(this).apply {
+                isChecked = app.pkg in remembered
+                isClickable = false
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+            list.addView(row(
+                icon = MediaApps.icon(this, app.pkg),
+                title = app.label,
+                subtitle = null,
+                trailing = sw,
+            ) {
+                val on = !sw.isChecked
+                sw.isChecked = on
+                Prefs.setRemembered(this, app.pkg, on)
+                MediaListenerService.instance?.refreshPins()
+            })
+        }
     }
 
-    private fun save() {
-        Prefs.saveSlots(this, widgetId, slots, rows)
-        // One-time: let each installed slot shell delegate its player card to us
-        for (pkg in PinManager.slotsNeedingActivation(this, rows)) {
-            runCatching {
-                startActivity(Intent().setClassName(pkg, "io.github.intersebbtor.playerpin.slot.ActivateActivity"))
-            }
-        }
+    private fun applyChange() {
         MediaListenerService.instance?.refreshPins()
-        android.widget.Toast.makeText(this, R.string.saved, android.widget.Toast.LENGTH_SHORT).show()
-        finish()
+        content.postDelayed({ render() }, 400)
     }
 
     private fun openListenerSettings() {
