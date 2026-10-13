@@ -106,10 +106,25 @@ object PinManager {
     var status: Map<String, Status> = emptyMap()
         private set
 
+    /** Something changed while the phone was locked. Applied on unlock. */
+    private var pendingWhileLocked = false
+
+    /** Locked or screen off: any card change would light up the AOD and move the lock screen clock. */
+    private fun locked(c: Context): Boolean {
+        val interactive = c.getSystemService(android.os.PowerManager::class.java).isInteractive
+        val keyguard = c.getSystemService(android.app.KeyguardManager::class.java).isKeyguardLocked
+        return !interactive || keyguard
+    }
+
     /** Recompute all stand-ins. Call from the listener service (needs session access). */
     fun refresh(ctx: Context, active: Array<StatusBarNotification>?) {
         val c = ctx.applicationContext
         appCtx = c
+        if (locked(c)) {
+            pendingWhileLocked = true
+            return
+        }
+        pendingWhileLocked = false
         ensureChannel(c)
         cleanupOnce(c)
         val sessions = MediaSessions.controllers(c) ?: emptyMap()
@@ -302,7 +317,8 @@ object PinManager {
             .setOnlyAlertOnce(true)
             .setSortKey("pin_$index")
             .setCategory(Notification.CATEGORY_TRANSPORT)
-            .setVisibility(Notification.VISIBILITY_PUBLIC)
+            // Stand-ins belong to quick settings, not to the lock screen media widget
+            .setVisibility(Notification.VISIBILITY_SECRET)
         if (open != null) b.setContentIntent(open)
 
         val compact = mutableListOf<Int>()
@@ -352,8 +368,8 @@ object PinManager {
         handler.postDelayed(r, delay.coerceAtLeast(1000))
     }
 
-    /** Screen came on: refresh right away, cards may have timed out while it was off. */
-    fun onScreenOn(ctx: Context) {
+    /** Unlocked: refresh right away, cards may have timed out while locked. */
+    fun onUnlocked(ctx: Context) {
         pins.values.forEach { it.postedAt = 0L }
         MediaListenerService.instance?.refreshPins() ?: refresh(ctx, null)
     }
@@ -365,9 +381,8 @@ object PinManager {
     private fun scheduleKeepAlive() {
         keepAlive?.let { handler.removeCallbacks(it) }
         if (pins.values.none { it.visible }) return
-        // Nobody sees the panel with the screen off. Updating then only wakes the AOD.
-        val interactive = appCtx?.getSystemService(android.os.PowerManager::class.java)?.isInteractive ?: true
-        if (!interactive) return
+        // Nobody sees the panel while locked. Updating then only wakes the AOD.
+        if (appCtx?.let { locked(it) } != false) return
         val r = Runnable {
             val c = appCtx ?: return@Runnable
             MediaListenerService.instance?.refreshPins() ?: refresh(c, null)

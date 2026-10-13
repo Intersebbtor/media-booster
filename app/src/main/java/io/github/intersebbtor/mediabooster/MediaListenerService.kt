@@ -41,7 +41,7 @@ class MediaListenerService : NotificationListenerService() {
     private val screenReceiver = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
             when (intent.action) {
-                android.content.Intent.ACTION_SCREEN_ON -> PinManager.onScreenOn(this@MediaListenerService)
+                android.content.Intent.ACTION_USER_PRESENT -> PinManager.onUnlocked(this@MediaListenerService)
                 android.content.Intent.ACTION_SCREEN_OFF -> PinManager.onScreenOff()
             }
         }
@@ -52,7 +52,7 @@ class MediaListenerService : NotificationListenerService() {
         instance = this
         if (!screenRegistered) {
             registerReceiver(screenReceiver, android.content.IntentFilter().apply {
-                addAction(android.content.Intent.ACTION_SCREEN_ON)
+                addAction(android.content.Intent.ACTION_USER_PRESENT)
                 addAction(android.content.Intent.ACTION_SCREEN_OFF)
             })
             screenRegistered = true
