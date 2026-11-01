@@ -14,6 +14,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
@@ -83,9 +84,21 @@ class ConfigActivity : Activity() {
         super.onResume()
         // Activation runs slot by slot: each one returns here, then the next starts
         if (activatingSlots && !activateNextSlot()) activatingSlots = false
-        // Fresh panel state for the status labels
-        MediaListenerService.instance?.refreshPins()
+        // Fresh panel state for the status labels. Re-render once the service has refreshed.
+        PinManager.onChanged = { if (!isFinishing) render() }
+        val service = MediaListenerService.instance
+        if (service != null) {
+            service.refreshPins()
+        } else if (MediaSessions.hasAccess(this)) {
+            // ColorOS killed our process and the listener was not rebound: nothing fills the places
+            runCatching { NotificationListenerService.requestRebind(MediaSessions.listenerComponent(this)) }
+        }
         render()
+    }
+
+    override fun onPause() {
+        PinManager.onChanged = null
+        super.onPause()
     }
 
     private fun readIntent(i: Intent) {

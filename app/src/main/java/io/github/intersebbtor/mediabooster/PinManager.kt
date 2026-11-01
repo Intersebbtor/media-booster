@@ -106,6 +106,10 @@ object PinManager {
     var status: Map<String, Status> = emptyMap()
         private set
 
+    /** For the UI: called on the main thread after every refresh. */
+    @Volatile
+    var onChanged: (() -> Unit)? = null
+
     /** Something changed while the phone was locked. Applied on unlock. */
     private var pendingWhileLocked = false
 
@@ -185,6 +189,7 @@ object PinManager {
             realShown.forEach { put(it, Status.LIVE) }
         }
         scheduleKeepAlive()
+        onChanged?.let { handler.post(it) }
     }
 
     fun releaseAll(ctx: Context) {
